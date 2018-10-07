@@ -1,5 +1,6 @@
 import numpy as np
 from copy import deepcopy
+from sklearn.metrics import accuracy_score
 
 """
 	Functions required by the Neural Network
@@ -67,6 +68,11 @@ class NeuralNetwork(object):
 		return parameters, history_loss
 
 	def evaluateModel(self, X, Y, parameters):
-
+		W = parameters["W"]
+		b = parameters["b"]
+		Y_prime = self.forward_propagate(X, W, b)
+		Y_true = np.argmax(Y, axis=0)
+		Y_predicted = np.argmax(Y_prime, axis=0)
+		return accuracy_score(Y_true, Y_predicted)
 
 
