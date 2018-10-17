@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, log_loss
 
 """
     Functions required by the Neural Network
@@ -49,9 +49,12 @@ class NeuralNetwork(object):
         return A
 
     def cost(self, AL, Y):
+        y = Y.argmax(axis=0)
         m = Y.shape[1]
-        cost = (-1 / m) * np.sum(np.multiply(Y, np.log(AL)) + np.multiply(1 - Y, np.log(1 - AL)))
-        return np.squeeze(cost)
+        log_likelihood = -np.log(AL[y,range(m)])
+        loss = np.sum(log_likelihood) / m
+        #cost = (-1 / m) * np.sum(np.multiply(Y, np.log(AL)) + np.multiply(1 - Y, np.log(1 - AL)))
+        return loss
 
     def HillClimbingTrain(self, X, W, b, Y, 
                           delta=0.6, num_iterations=1000, powerLaw=True):

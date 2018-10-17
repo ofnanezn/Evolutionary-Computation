@@ -24,7 +24,7 @@ class GeneticAlgorithm():
 		return Individual(random.randint(0, sum([2**i for i in range(self.chrom_size)])))
 
 	def mutation(self, chromosome):
-		pos = random.randint(0, self.chrom_size)
+		pos = random.randrange(0, self.chrom_size)
 		return Individual(chromosome ^ 2**pos)
 
 	def crossover(self, parent1, parent2, cross_point):

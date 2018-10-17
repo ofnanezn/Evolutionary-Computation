@@ -1,0 +1,7 @@
+CROSSOVER_OPERATOR = "crossover"
+MUTATION_OPERATOR = "mutation"
+
+PROPORTIONAL_SELECTION = "proportional"
+RANK_SELECTION = "rank"
+
+PARENTS_TO_SELECT = 1
