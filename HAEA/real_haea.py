@@ -6,6 +6,9 @@ from real_selections import proportional, rank, tournament, elitist
 
 import numpy as np
 
+def d(x, y):
+	return np.linalg.norm(x.chromosome - y.chromosome)
+
 class RealHAEA():
 	def __init__( self, function, num_dims, populationLength, limits ):
 		self.function = function
@@ -24,13 +27,41 @@ class RealHAEA():
 			function = self.function
 		)
 
-		return ( child1, child2 )
+		return [ child1, child2 ]
 
 	def mutation( self, chromosome ):
 		pos = randrange( 0, self.num_dims )
 		lim_min, lim_max = self.limits[0], self.limits[1]
 		sigma = (lim_max - lim_min) / 100
 		new_chrom = chromosome[:]
+		new_chrom[pos] += np.random.randn() * sigma
+		if new_chrom[pos] > lim_max or new_chrom[pos] < lim_min:
+			return Individual(chromosome = chromosome, function = self.function)
+		child = Individual(
+			chromosome = new_chrom,
+			function = self.function
+		)
+		return child
+
+	def LC_crossover( self, p1, p2):
+		alpha = np.random.uniform()
+		c1 = alpha * p1 + (1 - alpha) * p2
+		c2 = (1 - alpha) * p1 + alpha * p2
+		child1 = Individual(
+			chromosome = c1,
+			function = self.function
+		)
+		child2 = Individual(
+			chromosome = c2,
+			function = self.function
+		)
+		return [ child1, child2 ]	
+
+	def G_mutation( self, chromosome):
+		pos = randrange( 0, self.num_dims )
+		lim_min, lim_max = self.limits[0], self.limits[1]
+		sigma = (lim_max - lim_min) / 100
+		new_chrom = np.array(chromosome[:])
 		new_chrom[pos] += np.random.randn() * sigma
 		if new_chrom[pos] > lim_max or new_chrom[pos] < lim_min:
 			return Individual(chromosome = chromosome, function = self.function)
@@ -68,19 +99,31 @@ class RealHAEA():
 		return parents
 
 	def applyOperator( self, operator, parents ):
-		offspring = parents
+		offspring = []
 
 		if operator == CROSSOVER_OPERATOR:
-			crossPoint = randrange( 1, self.num_dims )
-			children = self.crossover( parents[0].chromosome, parents[1].chromosome, crossPoint )
+			#crossPoint = randrange( 1, self.num_dims )
+			children = self.LC_crossover( parents[0].chromosome, parents[1].chromosome)
 		else: # operator == MUTATION_OPERATOR
-			children = [self.mutation( parents[0].chromosome )]
+			children = [self.G_mutation( parents[0].chromosome )]
 		offspring += children
 
 		return offspring
 
 	def best( self, offspring ):
 		return min( offspring, key = lambda individual: individual.fitness )
+
+	def best_prime(self, offspring, individual):
+		N = len(offspring)
+		x = offspring[0]
+		min_x = d(individual, offspring[0])
+		for i in range(1, N):
+			if d(individual, offspring[i]) > 0 and d(individual, offspring[i]) < min_x:
+				x = offspring[i]
+				min_x = d(individual, offspring[i])
+		if individual.fitness > x.fitness:
+			x = individual
+		return x
 
 	def recalculateRates( self, operator, child, individual ):
 		sigma = random()
@@ -110,7 +153,7 @@ class RealHAEA():
 		self.createPopulation()
 
 		# Initialize data to return
-		data = []
+		#data = []
 
 		# Generations
 		for i in range( generations ):
@@ -128,15 +171,16 @@ class RealHAEA():
 				offspring = self.applyOperator( operator, parents )
 
 				# Choose the best individual
-				child = self.best( offspring )
+				child = self.best_prime( offspring, individual )
+				# print(child.fitness, self.function(child.chromosome), operator)
 
 				# Recalculate operator rates
 				self.recalculateRates( operator, child, individual )
 
 				# Add child to newPopulation
 				newPopulation.append( child )
+
 			self.population = np.array(newPopulation)
+			#data.append( self.best( self.population ) )
 
-			data.append( self.best( self.population ) )
-
-		return data
+		return self.population
